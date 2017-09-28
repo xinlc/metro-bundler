@@ -33,6 +33,7 @@ export type OutputOptions = {
   sourcemapOutput?: string,
   sourcemapSourcesRoot?: string,
   sourcemapUseAbsolutePath?: boolean,
+  bundleConfig?:string,
 };
 
 export type RequestOptions = {|

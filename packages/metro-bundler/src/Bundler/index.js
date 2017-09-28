@@ -155,6 +155,7 @@ const {hasOwnProperty} = Object;
 class Bundler {
   _opts: Options;
   _getModuleId: ({path: string}) => number;
+  // _getModuleId: ({path:string}) => ModuleIdObj;
   _transformer: Transformer;
   _resolverPromise: Promise<Resolver>;
   _projectRoots: $ReadOnlyArray<string>;

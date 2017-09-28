@@ -58,7 +58,9 @@
     "timers": "fake",
     "setupFiles": [
       "<rootDir>/scripts/setupJest.js"
-    ],
-    "testEnvironment": "node"
+    ]
+  },
+  "dependencies": {
+    "debug": "^3.1.0"
   }
 }

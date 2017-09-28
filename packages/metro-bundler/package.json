@@ -2,7 +2,7 @@
   "version": "0.18.0",
   "name": "metro-bundler",
   "description": "🚇 The JavaScript bundler for React Native.",
-  "main": "src/index.js",
+  "main": "build/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:facebook/metro-bundler.git"

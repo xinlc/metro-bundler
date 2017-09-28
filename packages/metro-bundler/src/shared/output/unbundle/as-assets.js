@@ -20,6 +20,8 @@ const writeFile = require('../writeFile');
 const writeSourceMap = require('./write-sourcemap');
 
 const {joinModules} = require('./util');
+const fs = require('fs');
+const debug = require('debug')('metro-bundle.shared.bundle.as-assets');
 
 import type Bundle from '../../../Bundler/Bundle';
 import type {OutputOptions} from '../../types.flow';
@@ -45,7 +47,10 @@ function saveAsAssets(
     bundleEncoding: encoding,
     sourcemapOutput,
     sourcemapSourcesRoot,
+    bundleConfig,
   } = options;
+
+  let _bundleConfig;
 
   log('start');
   const {startupModules, lazyModules} = bundle.getUnbundle();
@@ -53,11 +58,18 @@ function saveAsAssets(
   const startupCode = joinModules(startupModules);
 
   log('Writing bundle output to:', bundleOutput);
+
+  // if the bundle config is set, read the config file
+ if(bundleConfig){
+  let config = fs.readFileSync(bundleConfig, 'utf8');
+  _bundleConfig = JSON.parse(config);
+ } 
+
   const modulesDir = path.join(path.dirname(bundleOutput), MODULES_DIR);
   const writeUnbundle =
     createDir(modulesDir).then( // create the modules directory first
       () => Promise.all([
-        writeModules(lazyModules, modulesDir, encoding),
+        writeModules(lazyModules, modulesDir, encoding, _bundleConfig),
         writeFile(bundleOutput, startupCode, encoding),
         writeMagicFlagFile(modulesDir),
       ])
@@ -87,14 +99,34 @@ function createDir(dirName) {
     mkdirp(dirName, error => error ? reject(error) : resolve()));
 }
 
-function writeModuleFile(module, modulesDir, encoding) {
-  const {code, id} = module;
-  return writeFile(path.join(modulesDir, id + '.js'), code, encoding);
+function writeModuleFile(module, modulesDir, encoding, bundleConfig, modules) {
+  const {code, id, name} = module;
+  let isBundle = false;
+  let fileName = id;
+  const {bundleFolders} = bundleConfig;
+  if(bundleFolders && bundleFolders.findIndex){
+    let bundleName = bundleFolders.find((path) => name.indexOf(path) > -1);
+    if(bundleName){
+      let bundleIndex = modules.find((module)=>module.name.indexOf(`${bundleName}/index.js`)>-1);
+      if(bundleIndex){
+        fileName = bundleIndex.id
+      }
+      isBundle = true
+    }
+  }
+  // return writeFile(path.join(modulesDir, id + '.js'), code, encoding);
+  if(isBundle){
+    debug(`write bundle ${name} to file ${fileName}.js`);
+    return writeFile(path.join(modulesDir, fileName + '.js'), code, encoding);
+  }else {
+    // debug(`write ${name} to file common.js`);
+    return writeFile(path.join(modulesDir, 'common.js'), code, encoding);
+  }
 }
 
-function writeModules(modules, modulesDir, encoding) {
+function writeModules(modules, modulesDir, encoding, bundleConfig) {
   const writeFiles =
-    modules.map(module => writeModuleFile(module, modulesDir, encoding));
+    modules.map(module => writeModuleFile(module, modulesDir, encoding, bundleConfig, modules));
   return Promise.all(writeFiles);
 }
 

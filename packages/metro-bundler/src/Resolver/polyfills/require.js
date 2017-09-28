@@ -81,6 +81,7 @@ function define(
     // we take `verboseName` from `arguments` to avoid an unused named parameter
     // in `define` in production.
     const verboseName: string | void = arguments[3];
+  console.log(`module '${moduleId}' verboseName '${verboseName}'`);
     if (verboseName) {
       modules[moduleId].verboseName = verboseName;
       verboseNamesToModuleIds[verboseName] = moduleId;
@@ -89,18 +90,20 @@ function define(
 }
 
 function require(moduleId: ModuleID | VerboseModuleNameForDev) {
-  if (__DEV__ && typeof moduleId === 'string') {
-    const verboseName = moduleId;
-    moduleId = verboseNamesToModuleIds[verboseName];
-    if (moduleId == null) {
-      throw new Error(`Unknown named module: '${verboseName}'`);
-    } else {
-      console.warn(
-        `Requiring module '${verboseName}' by name is only supported for ` +
-          'debugging purposes and will BREAK IN PRODUCTION!',
-      );
-    }
-  }
+  
+  // FIXME: not sure in which case the dev env will call the module verbose name, but not the id
+  // if (__DEV__ && typeof moduleId === 'string') {
+  //   const verboseName = moduleId;
+  //   moduleId = verboseNamesToModuleIds[verboseName];
+  //   if (moduleId == null) {
+  //     throw new Error(`Unknown named module: '${verboseName}'`);
+  //   } else {
+  //     console.warn(
+  //       `Requiring module '${verboseName}' by name is only supported for ` +
+  //         'debugging purposes and will BREAK IN PRODUCTION!',
+  //     );
+  //   }
+  // }
 
   //$FlowFixMe: at this point we know that moduleId is a number
   const moduleIdReallyIsNumber: number = moduleId;
