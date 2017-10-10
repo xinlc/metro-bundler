@@ -1,7 +1,7 @@
 快速记录bundle化修改过程
 =========
 
-# 修改设涉及的部分
+# 修改涉及的部分
 - git clone yanqiw/metro-bundler
 - 在 metro-bundler/packages/metro-bundler/ 中运行 npm link, 链接npm global到本地项目
 - 在 metro-bundler  运行 npm run build

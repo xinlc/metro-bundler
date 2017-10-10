@@ -29,7 +29,7 @@ import type {OutputOptions} from '../../types.flow';
 // must not start with a dot, as that won't go into the apk
 const MAGIC_UNBUNDLE_FILENAME = 'UNBUNDLE';
 const MODULES_DIR = 'js-modules';
-const COMMON_PACKAGE ='common.js';
+const COMMON_PACKAGE ='common';
 
 /**
  * Saves all JS modules of an app as single files
@@ -73,8 +73,8 @@ function saveAsAssets(
   if(bundleConfig){
     writeUnbundle = createDir(modulesDir).then(
       () => Promise.all([
-        writeBundles(lazyModules, modulesDir, encoding, _bundleConfig, _bundleWriteFileStream),
-        writeFile(bundleOutput, startupCode, encoding),
+        writeBundles(lazyModules, modulesDir, encoding, _bundleConfig, _bundleWriteFileStream, startupModules),
+        // writeFile(bundleOutput, startupCode, encoding),
         writeMagicFlagFile(modulesDir),
       ])
     )
@@ -154,22 +154,33 @@ function writeBundleFile(module, modulesDir, encoding, modules, bundleConfig: {b
       bundleWriteFileStream[fileName] = new Buffer(code);
     }else{
       debug(`write bundle ${name} to ${fileName} file stream`);
-      bundleWriteFileStream[fileName] = Buffer.concat([new Buffer(code), bundleWriteFileStream[fileName]]);
+      bundleWriteFileStream[fileName] = Buffer.concat([ bundleWriteFileStream[fileName], new Buffer(code)]);
     }
   }else {
     debug(`write bundle ${name} to ${COMMON_PACKAGE} file stream`);
     if(!bundleWriteFileStream[COMMON_PACKAGE]){
-      debug(`create ${COMMON_PACKAGE} file stream`);
-      bundleWriteFileStream[COMMON_PACKAGE] = new Buffer(code);
+      // debug(`create ${COMMON_PACKAGE} file stream`);
+      // bundleWriteFileStream[COMMON_PACKAGE] = new Buffer(startupCode);
+      // bundleWriteFileStream[COMMON_PACKAGE] = Buffer.concat([new Buffer(code), bundleWriteFileStream[COMMON_PACKAGE]]);
     }else{
-      bundleWriteFileStream[COMMON_PACKAGE] = Buffer.concat([new Buffer(code), bundleWriteFileStream[COMMON_PACKAGE]]);
+      bundleWriteFileStream[COMMON_PACKAGE] = Buffer.concat([ bundleWriteFileStream[COMMON_PACKAGE], new Buffer(code)]);
     }
   }
 }
 
-function writeBundles(modules, modulesDir, encoding, bundleConfig, bundleWriteFileStream) {
+function writeBundles(modules, modulesDir, encoding, bundleConfig, bundleWriteFileStream, startupModules:any) {
   const writeFiles = [];
+    if(!bundleWriteFileStream[COMMON_PACKAGE]){
+      debug(`create ${COMMON_PACKAGE} file stream`);
+      // write react native js core code
+      let RNCoreCode = joinModules(startupModules.slice(0, startupModules.length-2));
+      bundleWriteFileStream[COMMON_PACKAGE] = new Buffer(RNCoreCode);
+    }
   modules.map(module => writeBundleFile(module, modulesDir, encoding, modules, bundleConfig, bundleWriteFileStream));
+  
+  //write start up code
+  let startupCode = joinModules(startupModules.slice(startupModules.length-2, startupModules.length));
+  bundleWriteFileStream[COMMON_PACKAGE] = Buffer.concat([ bundleWriteFileStream[COMMON_PACKAGE], new Buffer(startupCode)]);
 
   for(let key in bundleWriteFileStream){
     debug(`close ${key} stream`);

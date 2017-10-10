@@ -31,7 +31,7 @@ function getModuleHashedPathId(path, usedIds){
   var len = 4;
   var hash = crypto.createHash("md5");
   hash.update(path);
-  var id = hash.digest("base64");
+  var id = hash.digest("hex");
   while(usedIds[id.substr(0, len)]){
     len++;
   }
