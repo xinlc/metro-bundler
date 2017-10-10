@@ -81,7 +81,9 @@ function define(
     // we take `verboseName` from `arguments` to avoid an unused named parameter
     // in `define` in production.
     const verboseName: string | void = arguments[3];
-  console.log(`module '${moduleId}' verboseName '${verboseName}'`);
+
+    // console.log(`module '${moduleId}' verboseName '${verboseName}'`);
+
     if (verboseName) {
       modules[moduleId].verboseName = verboseName;
       verboseNamesToModuleIds[verboseName] = moduleId;

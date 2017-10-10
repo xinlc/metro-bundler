@@ -29,6 +29,7 @@ import type {OutputOptions} from '../../types.flow';
 // must not start with a dot, as that won't go into the apk
 const MAGIC_UNBUNDLE_FILENAME = 'UNBUNDLE';
 const MODULES_DIR = 'js-modules';
+const COMMON_PACKAGE ='common.js';
 
 /**
  * Saves all JS modules of an app as single files
@@ -51,6 +52,8 @@ function saveAsAssets(
   } = options;
 
   let _bundleConfig;
+  let _bundleWriteFileStream = {};
+  let writeUnbundle;
 
   log('start');
   const {startupModules, lazyModules} = bundle.getUnbundle();
@@ -66,15 +69,29 @@ function saveAsAssets(
  } 
 
   const modulesDir = path.join(path.dirname(bundleOutput), MODULES_DIR);
-  const writeUnbundle =
+
+  if(bundleConfig){
+    writeUnbundle = createDir(modulesDir).then(
+      () => Promise.all([
+        writeBundles(lazyModules, modulesDir, encoding, _bundleConfig, _bundleWriteFileStream),
+        writeFile(bundleOutput, startupCode, encoding),
+        writeMagicFlagFile(modulesDir),
+      ])
+    )
+    writeUnbundle.then(() => {
+      log('Done writing mutple bundles output')
+    });
+  }else{
+    writeUnbundle =
     createDir(modulesDir).then( // create the modules directory first
       () => Promise.all([
-        writeModules(lazyModules, modulesDir, encoding, _bundleConfig),
+        writeModules(lazyModules, modulesDir, encoding),
         writeFile(bundleOutput, startupCode, encoding),
         writeMagicFlagFile(modulesDir),
       ])
     );
   writeUnbundle.then(() => log('Done writing unbundle output'));
+  }
 
   const sourceMap =
     relativizeSourceMap(
@@ -99,12 +116,26 @@ function createDir(dirName) {
     mkdirp(dirName, error => error ? reject(error) : resolve()));
 }
 
-function writeModuleFile(module, modulesDir, encoding, bundleConfig, modules) {
+function writeModuleFile(module, modulesDir, encoding) {
+  const {code, id}= module;
+  return writeFile(path.join(modulesDir, id + '.js'), code, encoding);
+}
+
+
+function writeModules(modules, modulesDir, encoding) {
+  const writeFiles =
+    modules.map(module => writeModuleFile(module, modulesDir, encoding));
+  return Promise.all(writeFiles);
+}
+
+function writeBundleFile(module, modulesDir, encoding, modules, bundleConfig: {bundleFolders:[string]}, bundleWriteFileStream) {
   const {code, id, name} = module;
   let isBundle = false;
   let fileName = id;
   const {bundleFolders} = bundleConfig;
-  if(bundleFolders && bundleFolders.findIndex){
+  
+  // adjest the module belong to bundle
+  if(bundleFolders && bundleFolders.find){
     let bundleName = bundleFolders.find((path) => name.indexOf(path) > -1);
     if(bundleName){
       let bundleIndex = modules.find((module)=>module.name.indexOf(`${bundleName}/index.js`)>-1);
@@ -114,19 +145,36 @@ function writeModuleFile(module, modulesDir, encoding, bundleConfig, modules) {
       isBundle = true
     }
   }
-  // return writeFile(path.join(modulesDir, id + '.js'), code, encoding);
+
+  // write to stream
+  let createdStream;
   if(isBundle){
-    debug(`write bundle ${name} to file ${fileName}.js`);
-    return writeFile(path.join(modulesDir, fileName + '.js'), code, encoding);
+    if(!bundleWriteFileStream[fileName]){
+      debug(`create ${fileName} file stream`);
+      bundleWriteFileStream[fileName] = new Buffer(code);
+    }else{
+      debug(`write bundle ${name} to ${fileName} file stream`);
+      bundleWriteFileStream[fileName] = Buffer.concat([new Buffer(code), bundleWriteFileStream[fileName]]);
+    }
   }else {
-    // debug(`write ${name} to file common.js`);
-    return writeFile(path.join(modulesDir, 'common.js'), code, encoding);
+    debug(`write bundle ${name} to ${COMMON_PACKAGE} file stream`);
+    if(!bundleWriteFileStream[COMMON_PACKAGE]){
+      debug(`create ${COMMON_PACKAGE} file stream`);
+      bundleWriteFileStream[COMMON_PACKAGE] = new Buffer(code);
+    }else{
+      bundleWriteFileStream[COMMON_PACKAGE] = Buffer.concat([new Buffer(code), bundleWriteFileStream[COMMON_PACKAGE]]);
+    }
   }
 }
 
-function writeModules(modules, modulesDir, encoding, bundleConfig) {
-  const writeFiles =
-    modules.map(module => writeModuleFile(module, modulesDir, encoding, bundleConfig, modules));
+function writeBundles(modules, modulesDir, encoding, bundleConfig, bundleWriteFileStream) {
+  const writeFiles = [];
+  modules.map(module => writeBundleFile(module, modulesDir, encoding, modules, bundleConfig, bundleWriteFileStream));
+
+  for(let key in bundleWriteFileStream){
+    debug(`close ${key} stream`);
+    writeFiles.push(writeFile(path.join(modulesDir, key + '.js'), bundleWriteFileStream[key], 'utf8'))
+  }
   return Promise.all(writeFiles);
 }
 
