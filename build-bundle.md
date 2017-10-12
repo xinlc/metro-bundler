@@ -225,10 +225,10 @@ BUNDLE_CONFIG="metrobundler.json"
 DEV='ture'
 
 # bundle ios 
-react-native unbundle --entry-file index.ios.js --platform ios --dev $DEV --reset-cache --bundle-config "$BUNDLE_CONFIG" --bundle-output "$DIST_IOS/main.jsbundle" --assets-dest "$DIST_IOS"
+react-native unbundle --entry-file index.ios.js --platform ios --dev $DEV --reset-cache --bundle-config "$BUNDLE_CONFIG" --bundle-output "$DIST_IOS/main.jsbundle" --assets-dest "$DIST_IOS/js-modules"
 ```
 
-输出后， 在xcode中添加`js-modules`, `assets`两个文件夹。 需要拖拽文件到xcode的项目名文件夹下，选在`create folder referance`（这个一定要选中，不然在项目中无法加载）.  
+输出后， 在xcode中添加`js-modules`, `js-modules/assets`两个文件夹。 需要拖拽文件到xcode的项目名文件夹下，选在`create folder referance`（这个一定要选中，不然在项目中无法加载）.  
 __注__：这步只需要做一次，两个文件添加到xcode项目中后,如没有新的文件生成，每次打包，不需要再次添加
 
 
