@@ -52,6 +52,9 @@ global.require = require;
 global.__d = define;
 
 const modules: ModuleMap = Object.create(null);
+// binde modules map to global
+global.modules = modules;
+
 if (__DEV__) {
   var verboseNamesToModuleIds: {[key: string]: number} = Object.create(null);
 }

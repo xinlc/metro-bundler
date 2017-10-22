@@ -96,6 +96,16 @@ const requireBundle = async function (moduleName: string, props: any, fromDisk:b
   // TODO: find module ID from the mapping
 
   const _moduleId = moduleName;
+
+  const _global = (typeof global !== 'undefined') ? global : (typeof self != 'undefined') ? self : this; // eslint-disable-line
+  if (_moduleId in _global.modules) {
+    // prevent repeated calls to `global.nativeRequire` to overwrite modules
+    // that are already loaded
+    const _module = _require(_moduleId); // require the module at runtime, but not the init
+    // $FlowFixMe: bablehelpres is defined in react natvie bundle
+    _module = babelHelpers.interopRequireDefault(_module); // eslint-disable-line
+    return React.createElement(_module.default, props);
+  }
   // try to find the module from local
   if (fromDisk) {
     try {
@@ -203,6 +213,13 @@ export default BundleContainer;
         "App/BundleApp" // the path to bundle src code folder
     ]
 }        
+```
+
+## 打来代码中控制是否从本地加载bundle的设置
+例如在上面`容器例子`中的变量`LOAD_FROM_DISK`
+```javascript
+
+const LOAD_FROM_DISK = true; //load bundle from disk
 ```
 
 ## ios
