@@ -253,11 +253,14 @@ __注__：这步只需要做一次，两个文件添加到xcode项目中后,如�
 打包后，记录好bundle的hashID，即bundle文件名。 打开`common.js`文件，找到bundle容器的代码，删掉对bundle的引用部分
 
 例如：
-bundle hash ID是b323. 我们在`common.js`中搜索`b323`, 找到如下两行代码， 删除即可
+bundle hash ID是b323. 我们在`common.js`中搜索`6005`, 找到如下两行代码， 删除即可
 ```javascript
-var _BundleApp = require('b323'); //"b323" = ../BundleApp
+var _BundleApp = require('6005'); //"b323" = ../BundleApp
 var _BundleApp2 = babelHelpers.interopRequireDefault(_BundleApp)
 ```
+
+生产:   
+ault(b), ~~c=t("6005"),~~ H=(~~babelHelpers.interopRequireDefault(c),~~{AK:f.default.AliGate
 
 ## android
 TBD
