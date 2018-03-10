@@ -2,9 +2,10 @@
 =========
 
 # 项目配置修改
-- git clone yanqiw/metro-bundler
+- git clone xinlc/metro-bundler
+- yarn
 - 在 metro-bundler/packages/metro-bundler/ 中运行 npm link, 链接npm global到本地项目
-- 在 metro-bundler  运行 npm run build
+- 在 metro-bundler  运行 yarn run build
 - 在实际项目中使用 npm link metro-bundler， 链接项目中的metro-bundler到本地npm仓库
 
 # 对react native的破坏性修改
@@ -52,7 +53,7 @@ module.exports = {
 
 ```
 
-- 注释掉`react-native/ios/scripts/react-native-xcode.sh` 最后部分打包bundle代码
+- 注释掉`react-native/scripts/react-native-xcode.sh` 最后部分打包bundle代码
 ```shell
 # $NODE_BINARY $CLI_PATH bundle \
 #   --entry-file "$ENTRY_FILE" \
