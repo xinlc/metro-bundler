@@ -3,6 +3,7 @@
 
 # 项目配置修改
 - git clone xinlc/metro-bundler
+- cd metro-bundler
 - yarn
 - 在 metro-bundler/packages/metro-bundler/ 中运行 npm link, 链接npm global到本地项目
 - 在 metro-bundler  运行 yarn run build
